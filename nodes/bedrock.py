@@ -5,13 +5,11 @@ import base64
 from io import BytesIO
 
 import requests
-# from retry import retry  # Comment out if not available
 
 from PIL import Image
 import numpy as np
 import torch
-
-# from .session import get_client  # Comment out if not available
+from .session import get_client 
 
 MAX_RETRY = 3
 
@@ -26,9 +24,36 @@ except:
     # Mock client for testing
     class MockClient:
         def invoke_model(self, **kwargs):
-            return {"body": type('MockBody', (), {'read': lambda: '{"content": [{"text": "mock response"}]}'})()}
+            model_id = kwargs.get('modelId', '')
+            
+            # Return appropriate mock response based on model type
+            if 'mistral' in model_id.lower():
+                # Mistral format
+                mock_response = '{"outputs": [{"text": "mock mistral response", "stop_reason": "length"}]}'
+            elif 'llama' in model_id.lower():
+                # Llama format
+                mock_response = '{"generation": "mock llama response"}'
+            elif 'nova' in model_id.lower():
+                # Nova format
+                mock_response = '{"output": {"message": {"content": [{"text": "mock nova response"}]}}}'
+            elif 'deepseek' in model_id.lower() or 'ai21' in model_id.lower():
+                # OpenAI-compatible format
+                mock_response = '{"choices": [{"message": {"content": "mock response"}}]}'
+            elif 'cohere' in model_id.lower():
+                # Cohere format
+                mock_response = '{"text": "mock cohere response"}'
+            elif 'titan' in model_id.lower():
+                # Titan format
+                mock_response = '{"results": [{"outputText": "mock titan response"}]}'
+            else:
+                # Default Claude format
+                mock_response = '{"content": [{"text": "mock claude response"}]}'
+            
+            return {"body": type('MockBody', (), {'read': lambda self: mock_response})()}
+        
         def list_inference_profiles(self, **kwargs):
             return {"inferenceProfileSummaries": []}
+    
     bedrock_runtime_client = MockClient()
     bedrock_client = MockClient()
 
