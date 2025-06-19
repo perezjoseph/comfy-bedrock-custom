@@ -26,7 +26,7 @@ _inference_profiles_cache = None
 
 def get_inference_profiles():
     """
-    Retrieve and cache inference profiles fram AWS Bedrock.
+    Retrieve and cache inference profiles from AWS Bedrock.
     Returns a dictionary mapping model IDs to their inference profile ARNs.
     """
     global _inference_profiles_cache
@@ -54,8 +54,25 @@ def get_inference_profiles():
         
     except Exception as e:
         print(f"Warning: Could not retrieve inference profiles: {e}")
-        print("This usually means AWS credentials are not configured in the ComfyUI environment.")
-        print("The inference profile nodes will use manual ARN input until credentials are configured.")
+        
+        # Provide specific guidance for awsvpc mode
+        error_msg = str(e).lower()
+        if 'credentials' in error_msg or 'access' in error_msg or 'unauthorized' in error_msg:
+            print("\n🔧 AWS Credential Configuration Needed:")
+            print("For awsvpc mode (ECS/EKS environments):")
+            print("  • ECS Tasks: Attach IAM Task Role with bedrock:* permissions")
+            print("  • EKS Pods: Use IAM Roles for Service Accounts (IRSA)")
+            print("  • Set AWS_DEFAULT_REGION environment variable")
+            print("  • Ensure the role has these permissions:")
+            print("    - bedrock:InvokeModel")
+            print("    - bedrock:ListInferenceProfiles")
+            print("    - bedrock:GetInferenceProfile")
+        elif 'region' in error_msg:
+            print("\n🌍 Region Configuration Needed:")
+            print("Set AWS_DEFAULT_REGION environment variable, e.g.:")
+            print("  export AWS_DEFAULT_REGION=us-east-1")
+        
+        print("\nThe nodes will use manual ARN input until credentials are configured.")
         _inference_profiles_cache = {}
         return {}
 
