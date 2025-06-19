@@ -1,3 +1,9 @@
 boto3
 requests
 retry
+numpy
+torch
+torchvision
+Pillow
+opencv-python
+paddleocr
